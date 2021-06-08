@@ -17,8 +17,6 @@ function generateRandomString() {
   return Math.random().toString(36).substr(2, 6)
 }
 
-console.log(generateRandomString())
-
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
@@ -42,8 +40,13 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  //save shortURL-longURL pair to urlDatabase
+  const shortURL = generateRandomString();
+  const templateVars = {shortURL: shortURL, longURL: req.body.longURL};
+  urlDatabase[shortURL] = req.body.longURL;
+  // console.log(urlDatabase)
+  // console.log(req.body);  // Log the POST request body to the console
+  res.render("urls_show", templateVars);         // Respond with 'Ok' (we will replace this)
 });
 
 //: indicates route paramater
@@ -54,6 +57,10 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+app.get("/u/:shortURL", (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
