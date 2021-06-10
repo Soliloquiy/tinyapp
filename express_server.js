@@ -1,4 +1,6 @@
 const express = require("express");
+//Require encryption for storing passwords
+const bcrypt = require("bcryptjs");
 //Require body-parser for cookie data
 const cookieParser = require('cookie-parser')
 //Require body-parser for POST data
@@ -17,8 +19,8 @@ app.set("view engine", "ejs");
 
 //Database for url
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
+  ism5xK: { longURL: "http://www.google.com", userID: "aJ48lW" }
 };
 //Database for users
 const users = { 
@@ -48,6 +50,16 @@ function getUserByEmail(email) {
   }
 }
 
+function getURLByID(id) {
+  let obj = {};
+  for (let key in urlDatabase) {
+    if (id === urlDatabase[key].userID) {
+      obj[key] = urlDatabase[key];
+    }
+  }
+  return obj;
+}
+
 app.get("/register", (req, res) => {
   user = users[req.cookies.id]
   const templateVars = { user }
@@ -62,20 +74,25 @@ app.post("/register", (req, res) => {
   if (getUserByEmail(req.body.email)) {
     return res.status("400").send("Email already exists...")
   }
-  //create variables to capture post info
-  const email = req.body.email;
-  const password = req.body.password;
-  //create variable to store generated id
-  const id = generateRandomString();
-  //create new user object with above variables
-  //can use shorthand notation for user object
-  const user = {id, email, password}
-  //Add new user object to user database
-  users[id] = user;
-  //set user_id cookie containing newly generated id
-  res.cookie("id", id);
 
-  res.redirect("/urls")
+  bcrypt.genSalt(10, (err, salt) => {
+    bcrypt.hash(req.body.password, salt, (err, hash) => {
+      const email = req.body.email;
+      const password = hash;
+      //create variable to store generated id
+      const id = generateRandomString();
+      //create new user object with above variables
+      //can use shorthand notation for user object
+      const user = {id, email, password}
+      //Add new user object to user database
+      users[id] = user;
+      console.log(user)
+      //set user_id cookie containing newly generated id
+      res.cookie("id", id);
+
+      res.redirect("/urls")
+    })
+  })
 });
 
 app.get("/login", (req, res) => {
@@ -86,13 +103,16 @@ app.get("/login", (req, res) => {
 
 app.get("/urls", (req, res) => {
   user = users[req.cookies.id]
-  const templateVars = { users, urls: urlDatabase };
+  const templateVars = { user, urls: getURLByID(req.cookies.id) };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
   user = users[req.cookies.id]
-  const templateVars = {users}
+  if (!user) {
+    return res.status("400").send("Must be logged in to access...")
+  }
+  const templateVars = {user}
   res.render("urls_new", templateVars);
 });
 
@@ -101,8 +121,8 @@ app.post("/urls", (req, res) => {
   //save shortURL-longURL pair to urlDatabase
   const shortURL = generateRandomString();
   //longURL established in urls-new.ejs as POST input name
-  const templateVars = {users, shortURL: shortURL, longURL: req.body.longURL};
-  urlDatabase[shortURL] = req.body.longURL;
+  const templateVars = {user, shortURL: shortURL, longURL: req.body.longURL};
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.cookies.id }
   res.render("urls_show", templateVars);
 });
 
@@ -115,11 +135,17 @@ app.post("/login", (req, res) => {
   if (!user) {
     return res.status("403").send("E-mail cannot be found...")
   }
-  if (user.password !== req.body.password) {
-    return res.status("403").send("Password does not match...")
-  }
-  res.cookie("id", user.id)
-  res.redirect("/urls")
+  // if (user.password !== req.body.password) {
+  //   return res.status("403").send("Password does not match...")
+  // }
+  bcrypt.compare(req.body.password, user.password, (err, response) => {
+    if (response) {
+      res.cookie("id", user.id)
+      res.redirect("/urls")
+      return;
+    }
+    res.status("403").send("Password does not match...")
+  })
 })
 
 app.post("/logout", (req, res) => {
@@ -131,23 +157,34 @@ app.post("/logout", (req, res) => {
 // will redirect to any resource that is inputted after :
 // resource value is stored in req.params in form "shortURL":"shortURL"
 app.get("/urls/:shortURL", (req, res) => {
+  if (!req.cookies.id) {
+    return res.status("400").send("Must be logged in to edit...")
+  }
+  console.log('why does a question mark appear???')
   user = users[req.cookies.id]
-  const templateVars = { users, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = { user, shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL};
   res.render("urls_show", templateVars);
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
+  if (!req.cookies.id) {
+    return res.status("400").send("Must be logged in to delete...")
+  }
+  console.log("here")
   delete urlDatabase[req.params.shortURL]
   res.redirect("/urls")
 })
 
 app.post("/urls/:shortURL", (req, res) => {
-  urlDatabase[req.params.shortURL] = req.body.longURL
+  if (!req.cookies.id) {
+    return res.status("400").send("Must be logged in to edit...")
+  }
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL
   res.redirect(`/urls/${req.params.shortURL}`)
 })
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL]
+  const longURL = urlDatabase[req.params.shortURL].longURL
   res.redirect(longURL);
 });
 
