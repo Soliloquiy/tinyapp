@@ -4,7 +4,7 @@ function getUserByEmail(email, database) {
       return database[user];
     }
   }
-};
+}
 
 function getURLByID(id, database) {
   let obj = {};
@@ -14,10 +14,10 @@ function getURLByID(id, database) {
     }
   }
   return obj;
-};
-
-function generateRandomString() {
-  return Math.random().toString(36).substr(2, 6)
 }
 
-module.exports = { getUserByEmail, getURLByID, generateRandomString }
+function generateRandomString() {
+  return Math.random().toString(36).substr(2, 6);
+}
+
+module.exports = { getUserByEmail, getURLByID, generateRandomString };

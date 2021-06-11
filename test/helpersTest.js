@@ -1,8 +1,6 @@
 const { assert } = require('chai');
 
-const { getUserByEmail } = require('../helpers');
-
-const { getURLByID } = require('../helpers');
+const { getUserByEmail, getURLByID } = require('../helpers');
 
 const testUsers = {
   "userRandomID": {
@@ -24,7 +22,7 @@ const testUrlDatabase = {
 
 describe('getUserByEmail', function() {
   it('should return a user with valid email', function() {
-    const user = getUserByEmail("user@example.com", testUsers)
+    const user = getUserByEmail("user@example.com", testUsers);
     const expectedOutput = "userRandomID";
     assert.deepEqual(user.id, expectedOutput);
   });
@@ -39,13 +37,13 @@ describe('getUserByEmail', function() {
 
 describe('getURLByID', function() {
   it('should return shortURL object from database containing a match with id from user', function() {
-    const urlObj = getURLByID("userRandomID", testUrlDatabase)
+    const urlObj = getURLByID("userRandomID", testUrlDatabase);
     const expectedOutput = {b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" }}
     assert.deepEqual(urlObj, expectedOutput);
   });
 
   it('should return an empty object if not a match with id from user', function() {
-    const urlObj = getURLByID("notexistID", testUrlDatabase)
+    const urlObj = getURLByID("notexistID", testUrlDatabase);
     const expectedOutput = {};
     assert.deepEqual(urlObj, expectedOutput);
   });
