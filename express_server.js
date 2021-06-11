@@ -23,7 +23,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 // SETUP COMPLETE===============================================================================================================================================================
 
-// DATABASE===============================================================================================================================================================
+// DATABASE=====================================================================================================================================================================
 const urlDatabase = {
   b2xVn2: { longURL: "http://www.lighthouselabs.ca", userID: "userRandomID" },
   ism5xK: { longURL: "http://www.google.com", userID: "aJ48lW" }
@@ -44,6 +44,7 @@ const users = {
 
 // GET - SECTION A ================================================================================================================================================================
 app.get("/", (req, res) => {
+  //check if user exists in database
   const user = users[req.session.id];
   if (user) {
     return res.redirect("/urls");
@@ -164,7 +165,6 @@ app.get("/register", (req, res) => {
 // GET - SECTION B COMPLETE==================================================================================================================================================================
 
 // POST - SECTION B =========================================================================================================================================================================
-//Pointer and display info contained in _header.ejs
 //create new login page to set cookie
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email, users);
@@ -217,8 +217,8 @@ app.post("/logout", (req, res) => {
   // res.clearCookie("id");
   res.redirect("/urls");
 });
-
 // POST - SECTION B COMPLETE==========================================================================================================================================================================
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

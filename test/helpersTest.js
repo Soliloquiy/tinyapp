@@ -1,6 +1,6 @@
 const { assert } = require('chai');
 
-const { getUserByEmail, getURLByID } = require('../helpers');
+const { getUserByEmail, getURLByID, generateRandomString } = require('../helpers');
 
 const testUsers = {
   "userRandomID": {
@@ -48,4 +48,12 @@ describe('getURLByID', function() {
     assert.deepEqual(urlObj, expectedOutput);
   });
 
+});
+
+describe('generateRandomString', function() {
+  it('should return a random string with a length of six', function() {
+    const genString = generateRandomString();
+    const expectedOutput = 6;
+    assert.deepEqual(genString.length, expectedOutput);
+  });
 });
